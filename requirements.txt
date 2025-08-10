@@ -1,0 +1,7 @@
+streamlit
+yt-dlp
+openai
+pydub
+jieba
+wordcloud
+matplotlib
