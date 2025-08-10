@@ -1,8 +1,8 @@
 streamlit
 yt-dlp
 openai
-pydub>=0.25
-pyaudioop>=0.1.7
+pydub==0.25.1
+audioop-lts; python_version>='3.13'
 jieba
 wordcloud
 matplotlib
