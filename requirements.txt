@@ -1,7 +1,8 @@
 streamlit
 yt-dlp
 openai
-pydub
+pydub>=0.25
+pyaudioop>=0.1.7
 jieba
 wordcloud
 matplotlib
