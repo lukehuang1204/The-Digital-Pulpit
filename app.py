@@ -219,9 +219,11 @@ with tab1:
                             BYTES_PER_SEC = BITRATE_BPS // 8
                             max_secs_per_part = int(LIMIT // BYTES_PER_SEC) - 10  # margin
 
-                            # download at a low bitrate so files fit under 24 MB
+                            # Improved download options for better compatibility and cloud stability
                             ydl_opts = {
-                                "format": "bestaudio[abr<=48]/bestaudio",
+                                # Use more robust format selection
+                                "format": "bestaudio/best",
+                                "format_sort": ["+abr"],  # Prefer lower bitrate for easier compression
                                 "outtmpl": os.path.join(temp_dir, f"{video_id}.%(ext)s"),
                                 "postprocessors": [
                                     {
@@ -232,15 +234,42 @@ with tab1:
                                 ],
                                 "quiet": True,
                                 "no_warnings": True,
+                                
+                                # Key improvements for cloud stability
+                                "forceipv4": True,  # Avoid IPv6 which often causes 403 on cloud platforms
+                                
+                                # Reduce concurrency and add retries for stability
+                                "concurrent_fragment_downloads": 1,
+                                "retries": 10,
+                                "fragment_retries": 10,
                             }
 
-                            # Get video info first
+                            # Get video info first and show available audio formats for debugging
                             with yt_dlp.YoutubeDL({'quiet': True, 'no_warnings': True}) as ydl:
                                 download_progress.progress(20, text="Fetching video metadata...")
                                 info = ydl.extract_info(youtube_url, download=False)
                                 video_title = info.get('title', f"Video {video_id}")
                                 video_duration = info.get('duration')          # seconds
                                 st.info(f"Found video: {video_title} ({video_duration/60:.1f} min)")
+                                
+                                # Show available audio formats for debugging
+                                audio_streams = [
+                                    {
+                                        "id": f.get("format_id"),
+                                        "ext": f.get("ext"),
+                                        "abr": f.get("abr"),
+                                        "asr": f.get("asr"),
+                                        "filesize": f.get("filesize"),
+                                        "vcodec": f.get("vcodec"),
+                                        "acodec": f.get("acodec"),
+                                    }
+                                    for f in info.get("formats", [])
+                                    if f.get("vcodec") == "none" and f.get("acodec") != "none"
+                                ]
+                                if audio_streams:
+                                    st.write(f"Available audio formats (showing first 5 of {len(audio_streams)}):")
+                                    for stream in audio_streams[:5]:
+                                        st.write(f"  - {stream['id']}: {stream['ext']} ({stream['abr']}kbps, {stream['acodec']})")
 
                             # Download the video audio
                             download_progress.progress(30, text="Downloading audio...")
